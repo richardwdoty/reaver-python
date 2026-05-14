@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# OS/editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# REAVER local data
+data/local_images/
+data/outputs/
+data/tmp/
+
+# Ignore large raw microscopy files by default,
+# but allow curated lightweight test fixtures.
+*.nd2
+*.czi
+*.lif
+*.oir
+*.oib
+
+# Optional: uncomment if real TIFFs get huge.
+# *.tif
+# *.tiff
+# !data/test_images/*.tif
+# !data/test_images/*.tiff
