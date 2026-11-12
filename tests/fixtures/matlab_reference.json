@@ -1,0 +1,62 @@
+{
+  "matlab_version": "24.1.0.2537033 (R2024a)",
+  "versions": {
+    "numpy": "2.4.4",
+    "scipy": "1.17.1",
+    "scikit-image": "0.26.0",
+    "tifffile": "2026.5.2"
+  },
+  "source_sha256": "d2b628c77709e2648056b935bc8c67b0286c2b264f3628fa1fea2aa5344aa946",
+  "cases": [
+    {
+      "name": "empty0",
+      "input_sha256": "f3cc103136423a57975750907ebc1d367e2985ac6338976d4d5a439f50323f4a",
+      "failures": {}
+    },
+    {
+      "name": "empty1",
+      "input_sha256": "f3cc103136423a57975750907ebc1d367e2985ac6338976d4d5a439f50323f4a",
+      "failures": {}
+    },
+    {
+      "name": "full0",
+      "input_sha256": "2a32d9a94209e87b46358ff2151efee07dea13d3171a3dfb4331dede6e060479",
+      "failures": {}
+    },
+    {
+      "name": "full1",
+      "input_sha256": "2a32d9a94209e87b46358ff2151efee07dea13d3171a3dfb4331dede6e060479",
+      "failures": {}
+    },
+    {
+      "name": "vessels0",
+      "input_sha256": "cebdee2a6d02c7bda455e5a61e3cd4e10ea018306112975244d46eb8a8c5522a",
+      "failures": {}
+    },
+    {
+      "name": "vessels1",
+      "input_sha256": "cebdee2a6d02c7bda455e5a61e3cd4e10ea018306112975244d46eb8a8c5522a",
+      "failures": {}
+    },
+    {
+      "name": "rgb0",
+      "input_sha256": "ed1c97586b50c6e62740a925938a97d4156dcb3791de9a6d83a433e46837b4e7",
+      "failures": {}
+    },
+    {
+      "name": "rgb1",
+      "input_sha256": "ed1c97586b50c6e62740a925938a97d4156dcb3791de9a6d83a433e46837b4e7",
+      "failures": {}
+    }
+  ],
+  "morphology": {
+    "fill": 0,
+    "bridge": 0,
+    "thin": 0,
+    "spur": 0,
+    "clean": 0,
+    "majority": 0,
+    "branchpoints": 0,
+    "endpoints": 0
+  }
+}

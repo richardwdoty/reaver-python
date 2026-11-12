@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
+from reaver.app.params import SegmentationParams
 
 
 @dataclass
@@ -19,6 +20,7 @@ class BaseImage:
 class DerivedLayers:
     selected_channels: np.ndarray | None = None
     gray: np.ndarray | None = None
+    local_mean: np.ndarray | None = None
     gray_neighbors: np.ndarray | None = None
     bw_1: np.ndarray | None = None
     bw_1_neighbors: np.ndarray | None = None
@@ -40,8 +42,19 @@ class ReaverImageState:
 
     image_loaded: bool = False
     image_segmented: bool = False
+    wire_update_pending: bool = False
+    input_channels: tuple[int, ...] = (0,)
+    segmented_channels: tuple[int, ...] | None = None
     verified: bool = False
     dirty: bool = False
 
     metrics: dict[str, float] = field(default_factory=dict)
+    measurements: dict[str, float] = field(default_factory=dict)
     edit_history: list = field(default_factory=list)
+    undo_layers: DerivedLayers | None = None
+    undo_available: bool = False
+    edit_backup_locked: bool = False
+    analysis_path: Path | None = None
+    save_path: Path | None = None
+    params: SegmentationParams | None = None
+    proposed_params: SegmentationParams | None = None

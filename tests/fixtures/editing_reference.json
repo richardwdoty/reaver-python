@@ -1,0 +1,11 @@
+{
+  "source": "D:\\Richard Doty\\Documents\\repos\\public_REAVER\\REAVER GUI\\updateWire.m",
+  "original_sha256": "fd3fe66126ab245ba8b75e5f6d57af6024fef989186827fbeac9787e228d6fb1",
+  "brush_source_sha256": "c30a8e2f23d153fa76365f86e8ed7f89728743cabb288010e6861007a5a6dc6e",
+  "changes": [
+    "replicate padding",
+    "no 2x dilation radius",
+    "omit GUI renderer"
+  ],
+  "brush": "figButtonMotion interpolation, rounding, bounds, and square dilation; coordinates converted to one-based"
+}

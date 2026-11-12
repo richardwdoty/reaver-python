@@ -1,0 +1,52 @@
+{
+  "matlab_version": "24.1.0.2537033 (R2024a)",
+  "versions": {
+    "numpy": "2.4.4",
+    "scipy": "1.17.1",
+    "scikit-image": "0.26.0",
+    "tifffile": "2026.5.2"
+  },
+  "source_sha256": "d2b628c77709e2648056b935bc8c67b0286c2b264f3628fa1fea2aa5344aa946",
+  "cases": [
+    {
+      "name": "settings_0",
+      "input_sha256": "cebdee2a6d02c7bda455e5a61e3cd4e10ea018306112975244d46eb8a8c5522a",
+      "failures": {}
+    },
+    {
+      "name": "settings_1",
+      "input_sha256": "cebdee2a6d02c7bda455e5a61e3cd4e10ea018306112975244d46eb8a8c5522a",
+      "failures": {}
+    },
+    {
+      "name": "settings_2",
+      "input_sha256": "cebdee2a6d02c7bda455e5a61e3cd4e10ea018306112975244d46eb8a8c5522a",
+      "failures": {}
+    },
+    {
+      "name": "settings_3",
+      "input_sha256": "cebdee2a6d02c7bda455e5a61e3cd4e10ea018306112975244d46eb8a8c5522a",
+      "failures": {}
+    },
+    {
+      "name": "settings_4",
+      "input_sha256": "cebdee2a6d02c7bda455e5a61e3cd4e10ea018306112975244d46eb8a8c5522a",
+      "failures": {}
+    },
+    {
+      "name": "settings_5",
+      "input_sha256": "cebdee2a6d02c7bda455e5a61e3cd4e10ea018306112975244d46eb8a8c5522a",
+      "failures": {}
+    }
+  ],
+  "morphology": {
+    "fill": 0,
+    "bridge": 0,
+    "thin": 0,
+    "spur": 0,
+    "clean": 0,
+    "majority": 0,
+    "branchpoints": 0,
+    "endpoints": 0
+  }
+}
