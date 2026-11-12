@@ -1,0 +1,14 @@
+REAVER for Windows (64-bit)
+
+Extract the entire ZIP to a folder you can write to, then double-click
+REAVER.exe. Keep the _internal folder beside the executable. Python and
+MATLAB are not required. Do not run directly inside the ZIP preview.
+
+Use File > Open Directory to select your microscopy images. Analyses are
+saved alongside images, so that directory must be writable.
+
+This preview is not code-signed. Windows may display a publisher warning.
+Only use downloads from the project's official GitHub repository.
+
+Project: https://github.com/richardwdoty/reaver-python
+Licenses are included in LICENSE and the licenses folder.

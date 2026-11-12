@@ -32,3 +32,13 @@ Install for development with `python -m pip install -e ".[test]"` and run
 `python -m pytest`. MATLAB is not needed for normal use or the saved-reference
 tests. See [MATLAB parity](docs/matlab_parity.md) for reference provenance,
 regeneration, and the limits of the current verification.
+
+# Windows standalone preview
+
+A portable Windows build can be generated through the **Windows application**
+GitHub Actions workflow (run it manually from the Actions tab). Extract the
+downloaded application ZIP completely and double-click `REAVER.exe`; Python
+and MATLAB are not required. Keep `_internal` beside the executable.
+
+The preview is unsigned and is not yet certified on a clean Windows machine.
+See [installation and build instructions](docs/installation.md).

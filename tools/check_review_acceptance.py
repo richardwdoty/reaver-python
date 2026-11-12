@@ -18,6 +18,7 @@ from reaver.app import preferences
 from reaver.gui import main_window
 from reaver.io.results import load_analysis,save_analysis
 from reaver.io.image_export import export_displayed_image
+from reaver.core.segmentation import segment_image
 
 
 def main():
@@ -43,6 +44,8 @@ def main():
     for index in range(w.file_list.count()):
         item=w.file_list.item(index);w.file_list.setCurrentItem(item)
         state=w.app_state.active_image
+        segmented=segment_image(state.base_image.data, state.params, state.segmented_channels or (0,))
+        segmentation_hash=hashlib.sha256(segmented.bw_2.tobytes()+segmented.wire.tobytes()).hexdigest()
         assert state.image_id==item.data(Qt.UserRole)
         assert state.path.name not in item.toolTip()+w.statusBar().currentMessage()
         before=state.derived_layers.bw_2.copy()
@@ -62,7 +65,8 @@ def main():
         secret=str(state.path)
         w.measurement_failed(secret)
         assert secret not in messages[-1] and state.path.name not in messages[-1]
-        cases.append(dict(image=state.path.name,alias=item.text(),verified=True,exports=6))
+        cases.append(dict(image=state.path.name,alias=item.text(),verified=True,exports=6,
+                          segmentation_sha256=segmentation_hash))
     original_save=main_window.save_analysis
     def fail(*a,**kw):raise OSError(str(w.app_state.active_image.path))
     main_window.save_analysis=fail
