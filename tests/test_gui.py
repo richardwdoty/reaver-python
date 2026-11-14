@@ -90,6 +90,32 @@ def test_gui_segmentation_and_all_views(window, tmp_path):
     assert w.app_state.active_image.derived_layers is layers
 
 
+def test_simplified_toolbar_and_display_choices(window, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QToolBar
+    w, app = window
+    expected = [('Original Image','displayed_channels'), ('Segmentation Input','input_channel'),
+                ('Vessel Mask','segmented'), ('Segmentation Overlay','overlay'), ('Wire Frame','wire_frame')]
+    assert [(w.display_mode_combo.itemText(i), w.display_mode_combo.itemData(i))
+            for i in range(w.display_mode_combo.count())] == expected
+    assert w.open_action in w.file_button.menu().actions()
+    assert all(w.open_action not in bar.actions() for bar in w.findChildren(QToolBar))
+    assert w.fit_action.text() == 'Fit Image'
+    assert w.fit_action.toolTip() == 'Fit the entire image to the viewing area.'
+    assert any(w.fit_action in bar.actions() for bar in w.findChildren(QToolBar))
+    tifffile.imwrite(tmp_path/'image.tif', np.zeros((48,64),np.uint8))
+    monkeypatch.setattr(QFileDialog,'getExistingDirectory',lambda *a: str(tmp_path))
+    w.open_action.trigger()
+    assert w.file_list.count() == 1
+    w.show()
+    w.file_list.setCurrentRow(0)
+    app.processEvents()
+    assert w.display_mode_combo.currentText() == 'Original Image'
+    w.image_label.zoom_at(QPointF(20,20),3)
+    assert w.image_label.zoom == 3
+    w.fit_action.trigger()
+    assert w.image_label.zoom == 1
+
+
 def test_brush_cache_and_ui_transition_only(window, tmp_path, monkeypatch):
     w, app = window
     image = np.zeros((96, 128, 3), np.uint8)
@@ -255,7 +281,7 @@ def test_edit_guards_failure_and_image_switch(window, tmp_path, monkeypatch):
     state = w.app_state.active_image
     original = deepcopy(state.derived_layers)
     # Read-only modes never edit; a no-op does not enable Update Wire.
-    w.display_mode_combo.setCurrentIndex(w.display_mode_combo.findData('grey'))
+    w.display_mode_combo.setCurrentIndex(w.display_mode_combo.findData('input_channel'))
     w.paint_stroke((20,20),(30,30),True)
     assert not state.wire_update_pending
     w.display_mode_combo.setCurrentIndex(w.display_mode_combo.findData('segmented'))

@@ -3,16 +3,21 @@
 Install with `python -m pip install -e ".[test]"`, then run `python -m reaver`.
 The Windows development environment also has `.venv/Scripts/reaver.exe`.
 
-1. Choose **Open Directory**, then click an image in the list.
+1. Choose **File → Open Directory**, then click an image in the list.
 2. Select segmentation channels (red by default). Grayscale needs no channel selection.
 3. Click **Segment Image**. Replacing existing analysis data requires confirmation;
    cancellation preserves the current work. Processing runs in a background worker; file and
    segmentation controls are locked until it finishes.
-4. Choose a display mode: displayed channels, input channel, grey, grey neighbors,
-   first binary, binary neighbors, second binary, wire frame, or overlay.
+4. Choose a display mode: **Original Image**, **Segmentation Input**, **Vessel Mask**,
+   **Segmentation Overlay**, or **Wire Frame**. Original Image shows the selected
+   display channels; Segmentation Input shows the currently selected segmentation
+   channels. Vessel Mask shows white vessel pixels on a black background. Overlay
+   adds boundaries and centerlines to the image; Wire Frame shows the centerlines.
+   Intermediate processing views are omitted from the selector; their calculations
+   and diagnostic renderers are preserved.
 5. Display channels affect visualization only. Changing segmentation channels
    requires clicking Segment Image again; the status bar identifies stale results.
-6. In **Second Binary** or **Segmentation Overlay**, left-drag to add vessel pixels
+6. In **Vessel Mask** or **Segmentation Overlay**, left-drag to add vessel pixels
    and right-drag to erase. Brush settings match MATLAB: 1–16 means a square
    footprint of 1–31 pixels (`2 × setting − 1`), not a circular brush.
 7. Choose **Update Wire** (U) after editing. It runs once per changed edit batch;
@@ -24,7 +29,7 @@ The Windows development environment also has `.venv/Scripts/reaver.exe`.
    After an update, the next edit starts a new batch. Segment Image resets undo.
 9. **Save Analysis** (Ctrl+S) saves the current segmentation and edits once its wire
    is up to date, always as `<image filename>.reaver` beside the image.
-10. Use **Open Directory**, then select an image to reopen its saved analysis
+10. Use **File → Open Directory**, then select an image to reopen its saved analysis
     automatically. There are no separate Open Analysis or Save Analysis As commands.
 11. Set **µm / pixel** under Analysis to the image's calibrated resolution, then
     click **Measure Vessels**. The panel shows area fraction, length/density,
@@ -79,7 +84,7 @@ Undefined means from zero surviving segments remain `NaN`; infinite values remai
 the exact definitions and limitations.
 
 Use the mouse wheel to zoom around the pointer, middle-button drag to pan, and
-**Fit** to restore the whole image. Ctrl+wheel or Up/Down adjusts the brush.
+**Fit Image** to restore the whole image. Ctrl+wheel or Up/Down adjusts the brush.
 Zoom is retained while editing, updating, undoing, or changing display modes;
 selecting an image fits it to the window. The yellow outline shows the brush's
 actual footprint. Editing is disabled in source and intermediate-layer views.
@@ -102,7 +107,7 @@ shows a disk for saved analyses, a checkmark for verified saves, and a warning
 symbol for unsaved changes (including pending wire updates). Hover for status
 and the save path. These indicators appear before loading an image. Clicking or
 using the keyboard to select an image switches to **Segmentation Overlay** when
-analysis data exists, or **Displayed Channels** otherwise, and fits the image.
+analysis data exists, or **Original Image** otherwise, and fits the image.
 Cached pending work is retained. Image tooltips use a light background and dark text.
 
 Keep the source image with its analysis when moving files. Analyses do not embed

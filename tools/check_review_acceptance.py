@@ -51,7 +51,7 @@ def main():
         before=state.derived_layers.bw_2.copy()
         w.verified_checkbox.setChecked(True)
         assert load_analysis(state.analysis_path).verified
-        for mode in ('displayed_channels','grey','first_binary','segmented','overlay','wire_frame'):
+        for mode in ('displayed_channels','input_channel','segmented','overlay','wire_frame'):
             w.display_mode_combo.setCurrentIndex(w.display_mode_combo.findData(mode))
             pixels=w.current_display_array.copy()
             output=export_displayed_image(state.path,pixels)
@@ -65,7 +65,7 @@ def main():
         secret=str(state.path)
         w.measurement_failed(secret)
         assert secret not in messages[-1] and state.path.name not in messages[-1]
-        cases.append(dict(image=state.path.name,alias=item.text(),verified=True,exports=6,
+        cases.append(dict(image=state.path.name,alias=item.text(),verified=True,exports=5,
                           segmentation_sha256=segmentation_hash))
     original_save=main_window.save_analysis
     def fail(*a,**kw):raise OSError(str(w.app_state.active_image.path))

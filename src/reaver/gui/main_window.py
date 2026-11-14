@@ -122,13 +122,9 @@ class MaskExportWorker(QThread):
 
 class ReaverMainWindow(QMainWindow):
     DISPLAY_MODE_OPTIONS = (
-        ("Displayed Channels", "displayed_channels"),
-        ("Input Channel", "input_channel"),
-        ("Grey", "grey"),
-        ("Grey Neighbors", "grey_neighbors"),
-        ("First Binary", "first_binary"),
-        ("First Binary Neighbors", "first_binary_neighbors"),
-        ("Second Binary", "segmented"),
+        ("Original Image", "displayed_channels"),
+        ("Segmentation Input", "input_channel"),
+        ("Vessel Mask", "segmented"),
         ("Segmentation Overlay", "overlay"),
         ("Wire Frame", "wire_frame"),
     )
@@ -281,7 +277,6 @@ class ReaverMainWindow(QMainWindow):
 
         self.open_action = QAction("Open Directory", self)
         self.open_action.triggered.connect(self.select_directory)
-        toolbar.addAction(self.open_action)
 
         self.save_analysis_action = QAction('Save Analysis', self)
         self.save_analysis_action.setShortcut(QKeySequence('Ctrl+S'))
@@ -368,7 +363,8 @@ class ReaverMainWindow(QMainWindow):
 
         toolbar.addSeparator()
 
-        self.fit_action = QAction("Fit", self)
+        self.fit_action = QAction("Fit Image", self)
+        self.fit_action.setToolTip('Fit the entire image to the viewing area.')
         self.fit_action.triggered.connect(self.fit_to_window)
         toolbar.addAction(self.fit_action)
 
