@@ -2,6 +2,7 @@
 import math
 from dataclasses import replace
 from PySide6.QtWidgets import QDialog, QDialogButtonBox, QFormLayout, QLineEdit, QMessageBox
+from .help import SETTING_HELP
 
 SETTING_LABELS = {
     'averaging_filter_size': 'Averaging filter size (pixels)',
@@ -52,8 +53,10 @@ class SegmentationSettingsDialog(QDialog):
         self.inputs = {}
         for name, label in SETTING_LABELS.items():
             field = QLineEdit(str(getattr(params,name)))
+            field.setToolTip(SETTING_HELP[name])
             self.inputs[name] = field
             layout.addRow(label,field)
+            layout.labelForField(field).setToolTip(SETTING_HELP[name])
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)

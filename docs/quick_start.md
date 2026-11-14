@@ -229,10 +229,10 @@ messages, but exported filenames retain original image identities, as in MATLAB.
 
 ## Display appearance
 
-The toolbar **Display** menu contains **Gamma Adjust**, **Center Line Color…**,
-and **Edge Line Color…**. Gamma Adjust follows MATLAB's overlay-only automatic
+The toolbar **Display** menu contains **Auto Contrast**, **Center Line Color…**,
+and **Edge Line Color…**. Auto Contrast (previously Gamma Adjust) follows MATLAB's overlay-only automatic
 per-channel contrast stretch (1%–99%, gamma exponent 1). It does not change source
-pixels, segmentation, measurements, saves, or verification. Colors also affect
+pixels, segmentation, measurements, saved analyses, or verification. Colors also affect
 only the overlay. Defaults are white centerlines and green edges. Grayscale
 overlays use MATLAB's red-channel background convention.
 
@@ -240,7 +240,20 @@ Wire Frame shows radius-two-dilated white lines and six-point red/cyan markers
 for branchpoints/endpoints. Markers retain their screen size as you zoom, with
 positions following pixel centers. They are hidden in other modes. As in MATLAB,
 markers are graphics above the image, so TIFF display exports contain the wire
-pixels but not point markers. Gamma and colors are session display preferences.
+pixels but not point markers. Auto Contrast and colors are session display preferences.
+Displayed-image TIFF exports include the adjusted overlay appearance; saved binary
+mask exports are unaffected.
+
+## Offline Help and tooltips
+
+The toolbar **Help** menu opens a non-modal guide with topics for getting started,
+segmentation settings, display modes, Auto Contrast, editing/navigation, and
+measurements/saving. **F1** opens Getting Started. Help is bundled with the
+application, works without internet access, and does not show image filenames.
+
+Hover over the threshold controls or a field/label in **Segmentation Settings**
+for a short explanation of its meaning and units. All tooltips, including those
+over the image canvas and image list, use dark text on an opaque light background.
 
 
 ## Keyboard shortcuts and remembered calibration

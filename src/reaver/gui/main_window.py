@@ -12,6 +12,7 @@ from reaver.io.results import load_analysis, save_analysis, find_analysis, defau
 from reaver.core.segmentation import segment_image
 from reaver.gui.image_viewer import render_view, update_brush_view
 from reaver.gui.canvas import ImageCanvas
+from reaver.gui.help import HelpDialog, install_tooltip_style, THRESHOLD_HELP, AUTO_CONTRAST_HELP
 from reaver.gui.batch_processing import BatchDialog, BatchWorker
 from reaver.gui.segmentation_settings import (SegmentationSettingsDialog, threshold_from_slider,
     threshold_from_text, slider_from_threshold)
@@ -131,6 +132,8 @@ class ReaverMainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        install_tooltip_style(QApplication.instance())
+        self.help_dialog = None
         self.worker = None
         self.blind_order = []
         self.blind_names = {}
@@ -156,8 +159,6 @@ class ReaverMainWindow(QMainWindow):
         self.save_stats_button.setEnabled(False)
 
         self.file_list = QListWidget()
-        self.file_list.setStyleSheet('QToolTip { background-color: #fffbe6; color: #202020; '
-                                     'border: 1px solid #999999; padding: 5px; }')
         self.file_list.currentItemChanged.connect(lambda item, previous: self.load_selected_image(item) if item else None)
 
         self.display_mode_label = QLabel("Display Mode")
@@ -326,9 +327,9 @@ class ReaverMainWindow(QMainWindow):
         self.export_display_action.setEnabled(False)
 
         view_menu = self.menuBar().addMenu('Display')
-        self.gamma_action = QAction('Gamma Adjust', self)
+        self.gamma_action = QAction('Auto Contrast', self)
         self.gamma_action.setCheckable(True)
-        self.gamma_action.setToolTip('MATLAB automatic contrast stretch for the overlay (1%–99%).')
+        self.gamma_action.setToolTip(AUTO_CONTRAST_HELP)
         self.gamma_action.toggled.connect(self.gamma_changed)
         view_menu.addAction(self.gamma_action)
         self.center_color_action = QAction('Center Line Color…',self)
@@ -378,6 +379,28 @@ class ReaverMainWindow(QMainWindow):
         self.brush_size_spinbox.setValue(self.app_state.edit_state.brush_size)
         self.brush_size_spinbox.valueChanged.connect(self.update_brush_size)
         toolbar.addWidget(self.brush_size_spinbox)
+        toolbar.addSeparator()
+        self.help_button = QToolButton()
+        self.help_button.setText('Help')
+        self.help_button.setPopupMode(QToolButton.InstantPopup)
+        help_menu = QMenu(self)
+        self.help_actions = {}
+        for topic in ('Getting Started', 'Segmentation Settings', 'Display Modes', 'Auto Contrast', 'Editing and Navigation', 'Measurements and Saving'):
+            action = help_menu.addAction(topic)
+            action.triggered.connect(lambda checked=False, topic=topic: self.show_help(topic))
+            self.help_actions[topic] = action
+        self.help_actions['Getting Started'].setShortcut(QKeySequence('F1'))
+        self.addAction(self.help_actions['Getting Started'])
+        self.help_button.setMenu(help_menu)
+        toolbar.addWidget(self.help_button)
+
+    def show_help(self, topic='Getting Started'):
+        if self.help_dialog is None:
+            self.help_dialog = HelpDialog(self)
+        self.help_dialog.show_topic(topic)
+        self.help_dialog.show()
+        self.help_dialog.raise_()
+        self.help_dialog.activateWindow()
 
     def _build_sidebar(self):
         self.sidebar = QWidget()
@@ -719,13 +742,14 @@ class ReaverMainWindow(QMainWindow):
         threshold_row = QHBoxLayout()
         threshold_row.addWidget(QLabel('Threshold:'))
         self.threshold_edit = QLineEdit()
+        self.threshold_edit.setToolTip(THRESHOLD_HELP)
         self.threshold_edit.setMaximumWidth(80)
         self.threshold_edit.editingFinished.connect(self.threshold_text_changed)
         threshold_row.addWidget(self.threshold_edit)
         layout.addLayout(threshold_row)
         self.threshold_slider = QSlider(Qt.Horizontal)
         self.threshold_slider.setRange(0,400)
-        self.threshold_slider.setToolTip('MATLAB threshold scale: fine control from 0 to 0.2, then 0.2 to 1.')
+        self.threshold_slider.setToolTip(THRESHOLD_HELP + ' Slider: fine control up to 0.2, then coarser steps to 1.')
         self.threshold_slider.valueChanged.connect(self.threshold_slider_changed)
         layout.addWidget(self.threshold_slider)
         result_threshold_row = QHBoxLayout()

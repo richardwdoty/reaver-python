@@ -116,6 +116,61 @@ def test_simplified_toolbar_and_display_choices(window, tmp_path, monkeypatch):
     assert w.image_label.zoom == 1
 
 
+def test_offline_help_topics_preserve_analysis(window, tmp_path):
+    from test_measurement_export import make_state
+    from reaver.io.results import save_analysis
+    from dataclasses import fields
+    w, app = window
+    original = make_state(tmp_path)
+    original.verified = True
+    saved = save_analysis(original)
+    saved_bytes = saved.read_bytes()
+    w.open_directory(tmp_path)
+    w.file_list.setCurrentRow(0)
+    state = w.app_state.active_image
+    before = deepcopy(state)
+    pixels = w.current_display_array.copy()
+    for topic, action in w.help_actions.items():
+        action.trigger()
+        assert w.help_dialog.isVisible() and not w.help_dialog.isModal()
+        text = w.help_dialog.browser.toPlainText()
+        assert topic in text and state.path.name not in text
+        assert not w.help_dialog.browser.openExternalLinks()
+    dialog = w.help_dialog
+    dialog.close()
+    w.help_actions['Auto Contrast'].trigger()
+    assert w.help_dialog is dialog
+    assert '1st and 99th' in dialog.browser.toPlainText()
+    assert w.gamma_action.text() == 'Auto Contrast'
+    assert 'Does not change segmentation or measurements' in w.gamma_action.toolTip()
+    for field in fields(before.derived_layers):
+        np.testing.assert_array_equal(getattr(state.derived_layers,field.name),getattr(before.derived_layers,field.name))
+    assert state.params == before.params and state.verified and not state.dirty
+    np.testing.assert_array_equal(w.current_display_array, pixels)
+    assert saved.read_bytes() == saved_bytes
+
+
+def test_shared_tooltip_colors_and_parameter_explanations(window):
+    from PySide6.QtGui import QPalette
+    from PySide6.QtWidgets import QToolTip
+    from reaver.gui.help import TOOLTIP_STYLE, SETTING_HELP, install_tooltip_style
+    from reaver.gui.segmentation_settings import SegmentationSettingsDialog
+    w, app = window
+    install_tooltip_style(app)
+    assert app.styleSheet().count(TOOLTIP_STYLE) == 1
+    for group in (QPalette.Active, QPalette.Inactive, QPalette.Disabled):
+        assert QToolTip.palette().color(group,QPalette.ToolTipBase).name() == '#fffbe6'
+        assert QToolTip.palette().color(group,QPalette.ToolTipText).name() == '#202020'
+    assert not w.file_list.styleSheet()  # Canvas and list use the same app-wide rule.
+    dialog = SegmentationSettingsDialog(w.app_state.params, w)
+    for name, field in dialog.inputs.items():
+        assert field.toolTip() == SETTING_HELP[name]
+        assert dialog.layout().labelForField(field).toolTip() == SETTING_HELP[name]
+    assert 'full vessel diameter' in SETTING_HELP['vessel_thickness_threshold']
+    assert 'Zero disables' in SETTING_HELP['wire_dilation_threshold']
+    assert 'Segment Image' in w.threshold_edit.toolTip()
+
+
 def test_brush_cache_and_ui_transition_only(window, tmp_path, monkeypatch):
     w, app = window
     image = np.zeros((96, 128, 3), np.uint8)
@@ -523,7 +578,7 @@ def test_resegment_confirmation_and_simplified_file_controls(window,tmp_path,mon
     labels=[a.text() for a in w.file_button.menu().actions()]
     assert not any('Open Analysis' in t or 'Save Analysis As' in t for t in labels)
     assert not hasattr(w,'open_analysis_action') and not hasattr(w,'save_analysis_as_action')
-    assert '#fffbe6' in w.file_list.styleSheet() and '#202020' in w.file_list.styleSheet()
+    assert '#fffbe6' in app.styleSheet() and '#202020' in app.styleSheet()
     questions=[]
     def cancel(*args):
         questions.append(args);return QMessageBox.Cancel
