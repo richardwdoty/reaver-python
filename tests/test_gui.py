@@ -171,6 +171,51 @@ def test_shared_tooltip_colors_and_parameter_explanations(window):
     assert 'Segment Image' in w.threshold_edit.toolTip()
 
 
+def test_measurements_float_then_remember_docking_and_geometry(window, tmp_path):
+    from test_measurement_export import make_state
+    from reaver.io.results import save_analysis
+    w, app = window
+    original = make_state(tmp_path)
+    saved = save_analysis(original)
+    saved_bytes = saved.read_bytes()
+    w.show()
+    w.open_directory(tmp_path)
+    w.file_list.setCurrentRow(0)
+    assert w.measurements_dock.isFloating() and not w.measurements_dock.isVisible()
+    w.measure_current_image()
+    wait_for_worker(w, app)
+    assert w.measurements_dock.isVisible() and w.measurements_dock.isFloating()
+    w.measurements_dock.resize(460,520)
+    w.measurements_dock.move(80,90)
+    app.processEvents()
+    size = w.measurements_dock.size()
+    position = w.measurements_dock.pos()
+    w.measurements_dock.close()
+    other = ReaverMainWindow()
+    other.show()
+    other.measurements_dock.show()
+    app.processEvents()
+    assert other.measurements_dock.isFloating()
+    assert other.measurements_dock.size() == size
+    assert (other.measurements_dock.pos()-position).manhattanLength() <= 10
+    other.addDockWidget(Qt.LeftDockWidgetArea,other.measurements_dock)
+    other.measurements_dock.setFloating(False)
+    app.processEvents()
+    other.close()
+    reopened = ReaverMainWindow()
+    assert not reopened.measurements_dock.isFloating()
+    assert reopened.dockWidgetArea(reopened.measurements_dock) == Qt.LeftDockWidgetArea
+    assert not reopened.measurements_dock.isVisible()
+    reopened.show()
+    reopened.open_directory(tmp_path)
+    reopened.file_list.setCurrentRow(0)
+    reopened.measure_current_image()
+    wait_for_worker(reopened, app)
+    assert reopened.measurements_dock.isVisible() and not reopened.measurements_dock.isFloating()
+    reopened.close()
+    assert saved.read_bytes() == saved_bytes
+
+
 def test_brush_cache_and_ui_transition_only(window, tmp_path, monkeypatch):
     w, app = window
     image = np.zeros((96, 128, 3), np.uint8)

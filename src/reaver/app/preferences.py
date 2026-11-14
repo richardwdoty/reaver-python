@@ -1,6 +1,6 @@
 """Per-user defaults, separate from each analysis's saved settings."""
 import math
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QSettings, QByteArray
 
 
 def settings_store():
@@ -23,3 +23,27 @@ def save_default_resolution(value):
     store.sync()
     if store.status() != QSettings.NoError:
         raise OSError('Could not remember the default calibration')
+
+
+def load_measurement_layout():
+    store = settings_store()
+    floating = str(store.value('measurements/floating', 'true')).lower() != 'false'
+    try:
+        area = int(store.value('measurements/dock_area', 2))
+        width = int(store.value('measurements/dock_width', 390))
+    except (TypeError, ValueError):
+        area, width = 2, 390
+    geometry = store.value('measurements/floating_geometry', QByteArray())
+    return dict(floating=floating, area=area if area in (1,2,4,8) else 2,
+                width=max(350,min(width,2000)),
+                geometry=geometry if isinstance(geometry,QByteArray) else QByteArray())
+
+
+def save_measurement_layout(floating, area, width, geometry):
+    store = settings_store()
+    for key, value in dict(floating=bool(floating), dock_area=int(area),
+                           dock_width=int(width), floating_geometry=geometry).items():
+        store.setValue('measurements/'+key,value)
+    store.sync()
+    if store.status() != QSettings.NoError:
+        raise OSError('Could not remember the measurements window layout')

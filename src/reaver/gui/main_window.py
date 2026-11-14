@@ -12,6 +12,7 @@ from reaver.io.results import load_analysis, save_analysis, find_analysis, defau
 from reaver.core.segmentation import segment_image
 from reaver.gui.image_viewer import render_view, update_brush_view
 from reaver.gui.canvas import ImageCanvas
+from reaver.gui.measurement_dock import MeasurementDock
 from reaver.gui.help import HelpDialog, install_tooltip_style, THRESHOLD_HELP, AUTO_CONTRAST_HELP
 from reaver.gui.batch_processing import BatchDialog, BatchWorker
 from reaver.gui.segmentation_settings import (SegmentationSettingsDialog, threshold_from_slider,
@@ -41,11 +42,12 @@ from PySide6.QtWidgets import (
     QWidget,
     QMessageBox,
     QStyle,
-    QLineEdit, QDockWidget, QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView,
+    QLineEdit, QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView,
 )
 
 from reaver.app.app_state import ReaverAppState
-from reaver.app.preferences import load_default_resolution, save_default_resolution
+from reaver.app.preferences import (load_default_resolution, save_default_resolution,
+    load_measurement_layout, save_measurement_layout)
 from reaver.app.image_state import ReaverImageState
 
 
@@ -455,7 +457,8 @@ class ReaverMainWindow(QMainWindow):
         return group
 
     def _build_measurement_panel(self):
-        self.measurements_dock = QDockWidget('Vessel Measurements',self)
+        self.measurements_dock = MeasurementDock(self)
+        self.measurements_dock.setObjectName('vessel_measurements')
         self.measurements_dock.setMinimumWidth(350)
         panel = QWidget()
         layout = QVBoxLayout(panel)
@@ -474,8 +477,30 @@ class ReaverMainWindow(QMainWindow):
             self.measurements_table.setItem(row,1,QTableWidgetItem('—'))
         layout.addWidget(self.measurements_table)
         self.measurements_dock.setWidget(panel)
-        self.addDockWidget(Qt.RightDockWidgetArea,self.measurements_dock)
+        saved = load_measurement_layout()
+        self._measurement_dock_width = saved['width']
+        self.addDockWidget(Qt.DockWidgetArea(saved['area']),self.measurements_dock)
+        self.measurements_dock.floating_geometry = saved['geometry']
+        self.measurements_dock.setFloating(saved['floating'])
+        if saved['floating']:
+            self.measurements_dock.resize(390,500)
+            if not saved['geometry'].isEmpty():
+                self.measurements_dock.restoreGeometry(saved['geometry'])
+        else:
+            self.resizeDocks([self.measurements_dock],[saved['width']],Qt.Horizontal)
         self.measurements_dock.hide()
+        self.measurements_dock.closing.connect(self.remember_measurement_layout)
+
+    def remember_measurement_layout(self):
+        dock = self.measurements_dock
+        dock.remember_geometry()
+        if not dock.isFloating() and dock.isVisible():
+            self._measurement_dock_width = dock.width()
+        try:
+            save_measurement_layout(dock.isFloating(), self.dockWidgetArea(dock).value,
+                                    self._measurement_dock_width, dock.floating_geometry)
+        except OSError as exc:
+            self.statusBar().showMessage(str(exc))
 
     def refresh_measurements(self):
         state = self.app_state.active_image
@@ -714,7 +739,7 @@ class ReaverMainWindow(QMainWindow):
             self.refresh_measurements()
             if not self.measurements_dock.isVisible():
                 self.measurements_dock.show()
-                self.resizeDocks([self.measurements_dock],[390],Qt.Horizontal)
+            self.measurements_dock.raise_()
             self.measurements_table.resizeRowsToContents()
         if self.worker.path:
             count = len(result) if self.worker.items is not None else 1
@@ -1144,6 +1169,7 @@ class ReaverMainWindow(QMainWindow):
         if not self.confirm_unsaved('Close REAVER'):
             event.ignore()
             return
+        self.remember_measurement_layout()
         event.accept()
 
     def confirm_unsaved(self, title, states=None):

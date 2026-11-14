@@ -26,7 +26,7 @@ def install_tooltip_style(app):
 def help_pages():
     from .segmentation_settings import SETTING_LABELS
     settings = ''.join(f'<h3>{escape(SETTING_LABELS[key])}</h3><p>{escape(value)}</p>' for key,value in SETTING_HELP.items())
-    return {
+    pages = {
         'Getting Started': '<p>Use <b>File → Open Directory</b>, select an image, choose segmentation channels, then click <b>Segment Image</b>. Review the overlay, edit the mask, and use <b>Update Wire</b> before saving.</p><p><b>Save Analysis</b> writes a .reaver file beside the image. Selecting the image later reopens it. Mark a saved analysis <b>User verified</b> after review. Edits clear verification.</p>',
         'Segmentation Settings': '<p>Settings are proposals until you click <b>Segment Image</b>. Existing results retain the settings used to generate them. <b>Used for this result</b> shows the original threshold; <b>Restore</b> resets only that control without rerunning segmentation or discarding edits. Update Wire uses the result settings.</p><h3>Threshold</h3><p>'+escape(THRESHOLD_HELP)+'</p>'+settings,
         'Display Modes': '<p><b>Original Image:</b> the original image with selected display channels visible.</p><p><b>Segmentation Input:</b> the currently selected segmentation channels. If these differ from the result channels, segment again to apply them.</p><p><b>Vessel Mask:</b> white vessel pixels on a black background; editable.</p><p><b>Segmentation Overlay:</b> the image with vessel boundaries and centerlines; editable. After an edit, the old wire remains visible until Update Wire.</p><p><b>Wire Frame:</b> the centerline network with branchpoint and endpoint markers. Unavailable while a wire update is pending.</p><p>Display channels and colors change visualization, not segmentation or measurements.</p>',
@@ -34,6 +34,10 @@ def help_pages():
         'Editing and Navigation': '<p>Mouse wheel: zoom. Middle-button drag: pan. <b>Fit Image</b>: fit the entire image in the viewing area.</p><p>In Vessel Mask or Segmentation Overlay, left-drag adds vessel pixels and right-drag erases them. The MATLAB square brush uses width 2 × setting − 1 pixels. Ctrl+wheel or Up/Down changes its size.</p><p><b>Update Wire (U)</b> runs once after changed edits. <b>Undo (Ctrl+Z)</b> restores the entire edit batch, including the wire, before or after an update. It is not a multiple-step history.</p><p>R/G/B toggles display channels when not typing. Space switches to the previous view. Ctrl+S saves; Ctrl+W closes.</p>',
         'Measurements and Saving': '<p>Set the image calibration in µm/pixel before measuring. <b>Measure Vessels</b> calculates area, length, branchpoints, segments, diameter, tortuosity and related statistics using the MATLAB definitions. Edits invalidate existing measurements.</p><p>Results CSV exports use one file named after the directory. Verified-directory export includes saved, verified analyses. Save or discard pending work first. File also provides Discard Changes and Remove Saved Analysis.</p><p><b>Blind Image Names</b> randomizes the review order and shows anonymous labels. Saved analyses and exported filenames retain their original image identities; blinding is a review aid, not an anonymized export.</p>',
     }
+
+
+    pages['Measurements and Saving'] += '<p>Results open in a floating window by default. Drag its title bar into the main window to dock, or double-click the title bar to toggle floating/docked presentation. Closing the results window or REAVER remembers your choice, docking location and floating size/position. Closing results does not discard analysis data; Measure Vessels reopens them.</p>'
+    return pages
 
 
 class HelpDialog(QDialog):

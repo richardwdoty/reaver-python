@@ -61,6 +61,13 @@ No partial CSV replaces an existing export when a calculation or write fails.
 Saving changed results removes that image's old CSV row; export again to insert
 current measurements. An empty verified set produces a header-only CSV, removing
 previously verified rows. An unrelated CSV with a different header is left untouched.
+Measurement results open in a floating window on first use. Drag its title bar
+into the main window to dock it, or double-click the title bar to toggle floating
+and docked presentation. Closing the results window or REAVER remembers that
+choice, its docking location, and the floating window's size and position for
+future sessions. Closing the panel does not discard analysis data; Measure Vessels
+opens it again. These preferences are separate from saved analyses.
+
 The measurements panel is a calculated view; reopening an analysis requires
 clicking Measure Vessels again. Changing resolution scales measurements without
 rerunning segmentation, and Save Analysis preserves the new resolution.
