@@ -124,6 +124,39 @@ def test_brush_cache_and_ui_transition_only(window, tmp_path, monkeypatch):
     assert w._stroke_render_cache['contrast'][1] is not cached
 
 
+def test_regional_gui_refresh_after_display_changes_and_wire_update(window, tmp_path):
+    w, app = window
+    rng = np.random.default_rng(15)
+    tifffile.imwrite(tmp_path/'a.tif', rng.integers(0,256,(64,80,3),dtype=np.uint8))
+    tifffile.imwrite(tmp_path/'b.tif', rng.integers(0,256,(64,80,3),dtype=np.uint8))
+    w.open_directory(tmp_path)
+    for row in range(2):
+        w.file_list.setCurrentRow(row)
+        w.segment_button.click()
+        wait_for_worker(w, app)
+        state = w.app_state.active_image
+        for mode, gamma, channels in [('overlay',True,(True,False,True)),
+                                      ('segmented',False,(True,True,True)),
+                                      ('overlay',False,(False,True,True))]:
+            w.display_mode_combo.setCurrentIndex(w.display_mode_combo.findData(mode))
+            w.gamma_action.setChecked(gamma)
+            for checkbox, checked in zip(w.display_channel_checkboxes,channels):
+                checkbox.setChecked(checked)
+            w.app_state.display_settings.edge_line_color = (0,81,0)
+            w.refresh_current_display_image()
+            for add in (True,False,True):
+                w.paint_stroke((0,0),(79,63),add)
+                np.testing.assert_array_equal(w.current_display_array,
+                    render_view(state,mode,channels,settings=w.app_state.display_settings))
+        w.update_current_wire()
+        wait_for_worker(w, app)
+        np.testing.assert_array_equal(w.current_display_array,
+            render_view(state,'overlay',channels,settings=w.app_state.display_settings))
+        w.undo_current_edit()
+        np.testing.assert_array_equal(w.current_display_array,
+            render_view(state,'overlay',channels,settings=w.app_state.display_settings))
+
+
 def test_grayscale_uint16_and_channel_controls(window, tmp_path):
     w, app = window
     tifffile.imwrite(tmp_path/'gray.tif', np.full((32, 48), 32768, np.uint16))

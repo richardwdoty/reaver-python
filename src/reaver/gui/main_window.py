@@ -10,7 +10,7 @@ from reaver.io.images import load_image_state
 from reaver.io.image_export import export_displayed_image, export_saved_masks
 from reaver.io.results import load_analysis, save_analysis, find_analysis, default_analysis_path, analysis_verified, remove_saved_analysis
 from reaver.core.segmentation import segment_image
-from reaver.gui.image_viewer import render_view
+from reaver.gui.image_viewer import render_view, update_brush_view
 from reaver.gui.canvas import ImageCanvas
 from reaver.gui.batch_processing import BatchDialog, BatchWorker
 from reaver.gui.segmentation_settings import (SegmentationSettingsDialog, threshold_from_slider,
@@ -950,7 +950,15 @@ class ReaverMainWindow(QMainWindow):
         already_pending = self.app_state.active_image.wire_update_pending
         if paint_segment(self.app_state.active_image, start, end,
                          self.app_state.edit_state.brush_size, add):
-            self.refresh_current_display_image(brush_continuation=already_pending)
+            mode = self.app_state.display_settings.display_mode
+            if already_pending and self.current_display_array is not None and mode in ('overlay', 'segmented'):
+                update_brush_view(self.app_state.active_image, mode, self.current_display_array,
+                    start, end, self.app_state.edit_state.brush_size,
+                    self.app_state.display_settings.selected_colors,
+                    settings=self.app_state.display_settings, cache=self._stroke_render_cache)
+                self.update_display()
+            else:
+                self.refresh_current_display_image()
             if not already_pending:
                 self.update_status_bar()
 
@@ -1323,11 +1331,10 @@ class ReaverMainWindow(QMainWindow):
         for checkbox in (*self.display_channel_checkboxes, *self.segmentation_channel_checkboxes):
             checkbox.setEnabled(enabled)
 
-    def refresh_current_display_image(self, *, brush_continuation=False):
-        if not brush_continuation:
-            self._stroke_render_cache.clear()
-            self.sync_edit_controls()
-            self.refresh_measurements()
+    def refresh_current_display_image(self):
+        self._stroke_render_cache.clear()
+        self.sync_edit_controls()
+        self.refresh_measurements()
         image_state = self.app_state.active_image
 
         if image_state is None or image_state.base_image is None:
