@@ -26,3 +26,19 @@ def test_matlab_display_pixels_and_no_analysis_mutation(index):
 def test_flat_contrast_unchanged():
     image=np.full((20,20,3),75,np.uint8)
     np.testing.assert_array_equal(imadjust_uint8(image),image)
+
+
+@pytest.mark.parametrize('index', range(8))
+def test_cached_overlay_exact_through_edits_and_input_replacement(index):
+    state, settings, channels = deepcopy(CASES[index])
+    cache = {}
+    for step in range(5):
+        state.derived_layers.bw_2 = state.derived_layers.bw_2.copy()
+        state.derived_layers.bw_2[:step+1, :step+2] ^= True
+        if step == 2:
+            state.derived_layers.wire = ~state.derived_layers.wire
+        if step == 3:
+            state.base_image.data = 255-state.base_image.data
+        np.testing.assert_array_equal(
+            render_view(state, 'overlay', channels, settings=settings, cache=cache),
+            render_view(state, 'overlay', channels, settings=settings))

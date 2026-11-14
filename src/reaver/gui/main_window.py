@@ -139,6 +139,8 @@ class ReaverMainWindow(QMainWindow):
         self.blind_order = []
         self.blind_names = {}
         self._verification_cache = {}
+        # Reused only between brush segments. All other display refreshes clear it.
+        self._stroke_render_cache = {}
 
         self.setWindowTitle("REAVER")
         self.resize(1000, 700)
@@ -945,10 +947,12 @@ class ReaverMainWindow(QMainWindow):
     def paint_stroke(self, start, end, add):
         if not self.image_label.editable:
             return
+        already_pending = self.app_state.active_image.wire_update_pending
         if paint_segment(self.app_state.active_image, start, end,
                          self.app_state.edit_state.brush_size, add):
-            self.refresh_current_display_image()
-            self.update_status_bar()
+            self.refresh_current_display_image(brush_continuation=already_pending)
+            if not already_pending:
+                self.update_status_bar()
 
     def undo_current_edit(self):
         if self.worker is not None or self.image_label.last_pixel is not None:
@@ -1319,9 +1323,11 @@ class ReaverMainWindow(QMainWindow):
         for checkbox in (*self.display_channel_checkboxes, *self.segmentation_channel_checkboxes):
             checkbox.setEnabled(enabled)
 
-    def refresh_current_display_image(self):
-        self.sync_edit_controls()
-        self.refresh_measurements()
+    def refresh_current_display_image(self, *, brush_continuation=False):
+        if not brush_continuation:
+            self._stroke_render_cache.clear()
+            self.sync_edit_controls()
+            self.refresh_measurements()
         image_state = self.app_state.active_image
 
         if image_state is None or image_state.base_image is None:
@@ -1335,7 +1341,7 @@ class ReaverMainWindow(QMainWindow):
             self.app_state.display_settings.display_mode,
             self.app_state.display_settings.selected_colors,
             tuple(i for i, selected in enumerate(self.segmentation_channels) if selected),
-            settings=self.app_state.display_settings)
+            settings=self.app_state.display_settings, cache=self._stroke_render_cache)
         if self.current_display_array is None:
             self.export_display_action.setEnabled(False)
             self.image_label.clear()

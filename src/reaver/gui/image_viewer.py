@@ -21,16 +21,20 @@ def imadjust_uint8(image):
     return result
 
 
-def render_view(state, mode, display_channels=(True, True, True), input_channels=(0,), settings=None):
+def render_view(state, mode, display_channels=(True, True, True), input_channels=(0,), settings=None, cache=None):
+    """Render exact pixels; optional cache requires immutable image/wire inputs.
+
+    Hold source references rather than ids to avoid reuse after replacement.
+    The GUI clears this bounded cache on every non-brush display refresh.
+    """
     image = state.base_image.data
     gray = image.ndim == 2 or image.shape[-1] == 1
-    if gray:
-        background = image.reshape(image.shape[:2]).copy()
-    else:
-        background = image.copy()
-        background[..., ~np.asarray(display_channels, dtype=bool)] = 0
     layers = state.derived_layers
     if mode == 'displayed_channels':
+        if gray:
+            return image.reshape(image.shape[:2]).copy()
+        background = image.copy()
+        background[..., ~np.asarray(display_channels, dtype=bool)] = 0
         return background
     if mode == 'input_channel':
         if gray:
@@ -45,7 +49,14 @@ def render_view(state, mode, display_channels=(True, True, True), input_channels
         if layers.bw_2 is None or layers.wire is None:
             return None
         settings = settings or DisplaySettings()
-        base = imadjust_uint8(image) if settings.gamma_adjust else image
+        base = image
+        if settings.gamma_adjust:
+            cached = None if cache is None else cache.get('contrast')
+            if cached is None or cached[0] is not image:
+                cached = (image, imadjust_uint8(image))
+                if cache is not None:
+                    cache['contrast'] = cached
+            base = cached[1]
         if gray:
             base = np.repeat(base.reshape((*base.shape[:2],1)),3,axis=2)
             selected = (True,False,False)  # MATLAB's grayscale overlay uses red background.
@@ -56,7 +67,12 @@ def render_view(state, mode, display_channels=(True, True, True), input_channels
         boundary[[0,-1],:] = False
         boundary[:,[0,-1]] = False
         edge = binary_dilation(boundary,structure=disk(1))
-        wire = binary_dilation(layers.wire,structure=disk(1))
+        cached = None if cache is None else cache.get('wire')
+        if cached is None or cached[0] is not layers.wire:
+            cached = (layers.wire, binary_dilation(layers.wire,structure=disk(1)))
+            if cache is not None:
+                cache['wire'] = cached
+        wire = cached[1]
         out = np.zeros((*layers.bw_2.shape,3),dtype=np.uint8)
         for c in range(3):
             paint = settings.edge_line_color[c]*(edge & ~wire).astype(np.uint16) + settings.center_line_color[c]*wire.astype(np.uint16)

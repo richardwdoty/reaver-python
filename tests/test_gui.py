@@ -90,6 +90,40 @@ def test_gui_segmentation_and_all_views(window, tmp_path):
     assert w.app_state.active_image.derived_layers is layers
 
 
+def test_brush_cache_and_ui_transition_only(window, tmp_path, monkeypatch):
+    w, app = window
+    image = np.zeros((96, 128, 3), np.uint8)
+    image[20:45, :, 0] = 255
+    tifffile.imwrite(tmp_path/'cache.tif', image)
+    w.open_directory(tmp_path)
+    w.load_selected_image(w.file_list.item(0))
+    w.segment_button.click()
+    wait_for_worker(w, app)
+    w.gamma_action.setChecked(True)
+    w.display_mode_combo.setCurrentIndex(w.display_mode_combo.findData('overlay'))
+    state = w.app_state.active_image
+    counts = {'sync': 0, 'measurements': 0}
+    for name, key in [('sync_edit_controls', 'sync'), ('refresh_measurements', 'measurements')]:
+        original = getattr(w, name)
+        def wrapped(original=original, key=key):
+            counts[key] += 1
+            return original()
+        monkeypatch.setattr(w, name, wrapped)
+    w.paint_stroke((0, 0), (5, 0), True)
+    cached = w._stroke_render_cache['contrast'][1]
+    for add in (False, True, False):
+        w.paint_stroke((0, 0), (5, 0), add)
+        assert w._stroke_render_cache['contrast'][1] is cached
+        np.testing.assert_array_equal(w.current_display_array,
+            render_view(state, 'overlay', settings=w.app_state.display_settings))
+    assert counts == {'sync': 1, 'measurements': 1}
+    assert w.update_wire_action.isEnabled() and w.undo_action.isEnabled()
+    assert not w.save_analysis_action.isEnabled()
+    w.undo_current_edit()
+    assert not w.update_wire_action.isEnabled()
+    assert w._stroke_render_cache['contrast'][1] is not cached
+
+
 def test_grayscale_uint16_and_channel_controls(window, tmp_path):
     w, app = window
     tifffile.imwrite(tmp_path/'gray.tif', np.full((32, 48), 32768, np.uint16))
