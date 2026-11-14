@@ -732,6 +732,15 @@ class ReaverMainWindow(QMainWindow):
         self.threshold_slider.setToolTip('MATLAB threshold scale: fine control from 0 to 0.2, then 0.2 to 1.')
         self.threshold_slider.valueChanged.connect(self.threshold_slider_changed)
         layout.addWidget(self.threshold_slider)
+        result_threshold_row = QHBoxLayout()
+        self.result_threshold_label = QLabel('Used for this result: —')
+        self.result_threshold_label.setWordWrap(True)
+        result_threshold_row.addWidget(self.result_threshold_label)
+        self.restore_threshold_button = QPushButton('Restore')
+        self.restore_threshold_button.setToolTip('Restore the threshold used for this result. Does not rerun segmentation or discard edits.')
+        self.restore_threshold_button.clicked.connect(self.restore_result_threshold)
+        result_threshold_row.addWidget(self.restore_threshold_button)
+        layout.addLayout(result_threshold_row)
         self.settings_button = QPushButton('Segmentation Settings…')
         self.settings_button.clicked.connect(self.edit_segmentation_settings)
         layout.addWidget(self.settings_button)
@@ -749,6 +758,21 @@ class ReaverMainWindow(QMainWindow):
         self.threshold_slider.setValue(slider_from_threshold(value))
         self.threshold_slider.blockSignals(False)
         self.threshold_edit.setText(format(value,'.12g'))
+        self.refresh_result_threshold()
+
+    def refresh_result_threshold(self):
+        state = self.app_state.active_image
+        value = state.params.grey_to_bw_threshold if state and state.image_segmented and state.params is not None else None
+        self.result_threshold_label.setText('Used for this result: ' + ('—' if value is None else format(value,'.12g')))
+        self.restore_threshold_button.setEnabled(self.worker is None and value is not None
+            and value != self.app_state.params.grey_to_bw_threshold)
+
+    def restore_result_threshold(self):
+        state = self.app_state.active_image
+        if self.worker is not None or state is None or not state.image_segmented or state.params is None:
+            return
+        self.app_state.params.grey_to_bw_threshold = state.params.grey_to_bw_threshold
+        self.proposed_settings_changed()
 
     def proposed_settings_changed(self):
         state = self.app_state.active_image
@@ -766,6 +790,10 @@ class ReaverMainWindow(QMainWindow):
 
     def threshold_text_changed(self):
         if self.worker is not None:
+            return
+        # A restored/imported value may have more precision than manual entry.
+        # Merely leaving the field must not round that unchanged result value.
+        if self.threshold_edit.text() == format(self.app_state.params.grey_to_bw_threshold,'.12g'):
             return
         try:
             value = threshold_from_text(self.threshold_edit.text())
@@ -909,6 +937,7 @@ class ReaverMainWindow(QMainWindow):
 
     def sync_edit_controls(self):
         state = self.app_state.active_image
+        self.refresh_result_threshold()
         self.export_masks_action.setEnabled(self.worker is None and self.app_state.project_dir is not None)
         self.export_display_action.setEnabled(self.worker is None and state is not None and self.current_display_array is not None)
         self.blind_action.setEnabled(self.worker is None)

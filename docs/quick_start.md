@@ -155,6 +155,15 @@ Proposals stay with each image while browsing; saved files retain the settings
 actually used to produce their results. Reopening restores those saved settings.
 **Update Wire** uses the existing analysis settings, not unapplied proposals.
 
+**Used for this result** shows the threshold that generated the current analysis,
+including a newly segmented result that has not yet been saved. **Restore** sets
+the threshold control back to that value without running segmentation, changing
+other proposed settings, discarding brush edits, or altering verification, undo,
+wire results or saved files. It is disabled when the threshold already matches,
+when there is no segmented result, or while processing. Imported result values
+retain their original precision when restored, even if the slider cannot exactly
+represent them; the numeric field shows the restored value.
+
 
 ## Batch processing
 

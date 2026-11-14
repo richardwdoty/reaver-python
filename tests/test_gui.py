@@ -550,6 +550,8 @@ def test_settings_proposals_segment_save_reopen(window,tmp_path,monkeypatch):
     monkeypatch.setattr(QMessageBox,'question',lambda *args: QMessageBox.Yes)
     w.segment_button.click();wait_for_worker(w,app)
     assert state.params==proposed and not state.verified and state.dirty
+    assert w.result_threshold_label.text() == 'Used for this result: 0.201'
+    assert not w.restore_threshold_button.isEnabled()
     assert 'differ' not in w.settings_note.text()
     expected=segment_image(state.base_image.data,proposed,state.segmented_channels)
     np.testing.assert_array_equal(state.derived_layers.bw_2,expected.bw_2)
@@ -559,6 +561,90 @@ def test_settings_proposals_segment_save_reopen(window,tmp_path,monkeypatch):
     np.testing.assert_array_equal(loaded.derived_layers.wire,expected.wire)
     w.open_directory(tmp_path);w.file_list.setCurrentItem(w.file_list.item(0))
     assert w.threshold_edit.text()=='0.201' and w.app_state.params==proposed
+
+
+@pytest.mark.parametrize('edited', [False, True])
+def test_restore_threshold_preserves_analysis_and_other_proposals(window, tmp_path, monkeypatch, edited):
+    from dataclasses import fields
+    from test_measurement_export import make_state
+    from reaver.io.results import save_analysis
+    w, app = window
+    source = make_state(tmp_path)
+    source.params.grey_to_bw_threshold = .23456789
+    source.verified = True
+    saved = save_analysis(source)
+    saved_bytes = saved.read_bytes()
+    w.open_directory(tmp_path)
+    w.file_list.setCurrentRow(0)
+    state = w.app_state.active_image
+    assert w.result_threshold_label.text() == 'Used for this result: 0.23456789'
+    assert not w.restore_threshold_button.isEnabled()
+    if edited:
+        w.brush_size_spinbox.setValue(4)
+        w.paint_stroke((30,20),(40,20),False)
+        assert state.wire_update_pending
+    snapshot = deepcopy(state)
+    pixels = w.current_display_array.copy()
+    w.app_state.params.averaging_filter_size = 19
+    w.threshold_slider.setValue(300)
+    assert w.restore_threshold_button.isEnabled()
+    def forbidden(*args, **kwargs):
+        raise AssertionError('Restore must not segment')
+    monkeypatch.setattr('reaver.gui.main_window.segment_image', forbidden)
+    w.restore_threshold_button.click()
+    app.processEvents()
+    assert w.worker is None
+    assert w.app_state.params.grey_to_bw_threshold == .23456789
+    assert state.proposed_params.grey_to_bw_threshold == .23456789
+    assert state.proposed_params.averaging_filter_size == 19
+    assert w.settings_differ()  # Restore changes only the threshold.
+    assert not w.restore_threshold_button.isEnabled()
+    w.threshold_text_changed()  # Focus changes must preserve imported precision.
+    assert w.app_state.params.grey_to_bw_threshold == .23456789
+    for name in ('params', 'dirty', 'verified', 'wire_update_pending', 'undo_available', 'edit_backup_locked', 'metrics', 'measurements'):
+        assert getattr(state,name) == getattr(snapshot,name)
+    for name in ('derived_layers', 'undo_layers'):
+        actual, before = getattr(state,name), getattr(snapshot,name)
+        if before is None:
+            assert actual is None
+        else:
+            for field in fields(before):
+                np.testing.assert_array_equal(getattr(actual,field.name),getattr(before,field.name))
+    np.testing.assert_array_equal(w.current_display_array, pixels)
+    assert saved.read_bytes() == saved_bytes
+
+
+def test_result_threshold_without_analysis_and_when_busy(window, tmp_path):
+    w, app = window
+    assert w.result_threshold_label.text() == 'Used for this result: —'
+    assert not w.restore_threshold_button.isEnabled()
+    tifffile.imwrite(tmp_path/'raw.tif',np.zeros((32,32),np.uint8))
+    w.open_directory(tmp_path)
+    w.file_list.setCurrentRow(0)
+    w.threshold_slider.setValue(100)
+    w.restore_result_threshold()
+    assert w.app_state.params.grey_to_bw_threshold == .1
+    assert not w.restore_threshold_button.isEnabled()
+    w.segment_button.click()
+    assert not w.restore_threshold_button.isEnabled()
+    wait_for_worker(w,app)
+    assert w.result_threshold_label.text() == 'Used for this result: 0.1'
+    w.threshold_slider.setValue(200)
+    assert w.restore_threshold_button.isEnabled()
+    w.worker = object()
+    try:
+        w.refresh_result_threshold()
+        assert not w.restore_threshold_button.isEnabled()
+        w.restore_result_threshold()
+        assert w.app_state.params.grey_to_bw_threshold == .2
+    finally:
+        w.worker = None
+    w.restore_result_threshold()
+    assert w.app_state.params.grey_to_bw_threshold == .1
+    # Switching back to a raw image must not display the previous result value.
+    w.app_state.active_image.image_segmented = False
+    w.refresh_parameter_controls()
+    assert w.result_threshold_label.text() == 'Used for this result: —'
 
 
 def test_settings_dialog_cancel_invalid_and_wire_uses_saved_settings(window,tmp_path,monkeypatch):
